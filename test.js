@@ -4,7 +4,7 @@ var AWS = require('aws-sdk'),
 //SET API CONFIG VALUES
 AWS.config.update({
     credentials: new AWS.SharedIniFileCredentials({profile: 'default'}),
-    region:      'us-west-1',
+    region:      'us-west-2',
     sslEnabled:  false,
     apiVersions: {
         dynamodb: '2012-08-10',
