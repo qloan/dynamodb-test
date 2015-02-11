@@ -1,22 +1,23 @@
 {
-  "name": "core-api",
+  "name": "dynamodb tester",
   "version": "1.0.0",
-  "description": "QLoan core services API",
+  "description": "DynamoDB Tester",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/qloan/core-api.git"
+    "url": "git@github.com:qloan/dynamodb-test.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/qloan/core-api/issues"
+    "url": "https://github.com/qloan/dynamodb-test/issues"
   },
-  "homepage": "https://github.com/qloan/core-api",
+  "homepage": "https://github.com/qloan/dynamodb-test",
   "dependencies": {
-    "aws-sdk": "^2.1.8"
+    "aws-sdk": "^2.1.8",
+    "dynamodb-doc": "git://github.com/awslabs/dynamodb-document-js-sdk.git"
   }
 }
