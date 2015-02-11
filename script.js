@@ -38,7 +38,7 @@ if(cmd == 'listTables') {
 
     docClient.listTables({}, handler);
 
-}else if(cmd == 'seed') {
+}else if(cmd == 'seedTable') {
 
     (function() {
         var tableName = process.argv[3],
@@ -52,23 +52,56 @@ if(cmd == 'listTables') {
         
         recordCount = Math.min(recordCount, seedData.tableLen(tableName));
         for(n=0; n<recordCount; n++) {
+
             //insert item
             docClient.putItem({
                 TableName: tableName,
-                Item: seedData.get(tableName),
+                Item: seedData.get(tableName, n),
                 ConditionExpression: seedData.getInsertConditionExpression(tableName)  //ensure doesn't already exist. without this, item would be overwritten.
             }, handler);
         }
     })();
 
-}else if(cmd == 'initTables') {
+}else if(cmd == 'initTable') {
 
     (function() {
+        var tableName = process.argv[3];
 
+        docClient.scan({
+            TableName: tableName
+        }, function(err, data) {
+            if(err) {
+                console.log(err, err.stack);
+            }else {
+                data.Items.forEach(function(item) {
+                    docClient.deleteItem({
+                        TableName: tableName,
+                        Key: seedData.getDeleteKeys(tableName, item)
+                    }, handler);
+                });
+            }
+        });
     })();
 
+}else if(cmd == 'getAllItems') {
+    
+    (function() {
+        var tableName = process.argv[3];
+
+        docClient.scan({
+            TableName: tableName
+        }, handler);
+    })();
 }else {
-    console.log('Invalid command.');
+    console.log('Invalid command.\n');
+    console.log([
+        '\nUsage: script.js [command] [command arguments]\n',
+        'Valid Commands:',
+        'listTables',
+        'seedTable [table name] [# of records to seed]',
+        'initTable [table name]',
+        'getAllItems [table name]'
+    ].join('\n'));
     return 9;
 }
 
