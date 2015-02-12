@@ -42,7 +42,7 @@ if(cmd == 'listTables') {
 
     (function() {
         var tableName = process.argv[3],
-            recordCount = (process.argv[4]) ? process.argv[4] : 0,
+            recordCount,
             n;
 
         if(!seedData.exists(tableName)) {
@@ -50,7 +50,8 @@ if(cmd == 'listTables') {
             return 9;
         }
         
-        recordCount = Math.min(recordCount, seedData.tableLen(tableName));
+        recordCount = seedData.tableLen(tableName);
+
         for(n=0; n<recordCount; n++) {
 
             //insert item
@@ -67,6 +68,8 @@ if(cmd == 'listTables') {
     (function() {
         var tableName = process.argv[3];
 
+        //scan for all items in specified table. For each 
+        //item, generate the key object and delete the item
         docClient.scan({
             TableName: tableName
         }, function(err, data) {
@@ -88,6 +91,7 @@ if(cmd == 'listTables') {
     (function() {
         var tableName = process.argv[3];
 
+        //scan for all items in the specified table
         docClient.scan({
             TableName: tableName
         }, handler);
@@ -98,7 +102,7 @@ if(cmd == 'listTables') {
         '\nUsage: script.js [command] [command arguments]\n',
         'Valid Commands:',
         'listTables',
-        'seedTable [table name] [# of records to seed]',
+        'seedTable [table name]',
         'initTable [table name]',
         'getAllItems [table name]'
     ].join('\n'));
