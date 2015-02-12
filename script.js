@@ -72,8 +72,6 @@ if(cmd == 'listTables') {
 
 }else if(cmd == 'initTable') {
 
-    var tableName = process.argv[3];
-
     //scan for all items in specified table. For each 
     //item, generate the key object and delete the item
     docClient.scan({
@@ -90,6 +88,17 @@ if(cmd == 'listTables') {
             });
         }
     });
+
+}else if(cmd == 'getItem') {
+
+    (function() {
+        var key = eval('(' + process.argv[4] + ')');
+
+        docClient.getItem({
+            TableName: tableName,
+            Key: key
+        }, handler);
+    })();
 
 }else if(cmd == 'getAllItems') {
     
@@ -108,23 +117,14 @@ if(cmd == 'listTables') {
         'descTable [table name]',
         'seedTable [table name]',
         'initTable [table name]',
-        'getAllItems [table name]'
+        'getAllItems [table name]',
+        'getItem [table name] [key]'
     ].join('\n'));
     return 9;
 
 }
 
 /*
-//GET ITEM
-docClient.getItem({
-    TableName: 'my_first_table',
-    Key: {
-        my_id: '2',
-        company: 'Quicken Loans'
-    }
-}, handler);
-
-return;
 
 docClient.query({
     TableName: 'my_first_table',
