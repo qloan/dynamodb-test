@@ -70,7 +70,7 @@ if(cmd == 'listTables') {
         }
     })();
 
-}else if(cmd == 'initTable') {
+}else if(cmd == 'clearTable') {
 
     //scan for all items in specified table. For each 
     //item, generate the key object and delete the item
@@ -96,6 +96,7 @@ if(cmd == 'listTables') {
 
         docClient.getItem({
             TableName: tableName,
+            //ConsistentRead: true, //not supported on global secondary indexes.
             Key: key
         }, handler);
     })();
@@ -105,6 +106,7 @@ if(cmd == 'listTables') {
     docClient.query({
         TableName: tableName,
         //IndexName: 'my-index',
+        //ConsistentRead: true, //not supported on global secondary indexes.
         KeyConditions: [
             docClient.Condition('email', 'EQ', 'asdf@test.com')
         ],
@@ -165,12 +167,16 @@ if(cmd == 'listTables') {
     console.log([
         '\nUsage: script.js [command] [command arguments]\n',
         'Valid Commands:',
-        'listTables',
-        'descTable [table name]',
-        'seedTable [table name]',
-        'initTable [table name]',
-        'getAllItems [table name]',
-        'getItem [table name] [key]'
+        '---------------',
+        'listTables...................... List all tables in DynamoDB account',
+        'descTable [table name].......... Describe specified table',
+        'seedTable [table name].......... Seed the specified table with dummy data',
+        'clearTable [table name]......... Delete all items in the specified table',
+        'getAllItems [table name]........ Get all items in specified table',
+        'getItem [table name] [key]...... Get single item from specified table. Key is a json object which must reflect primary key',
+        'query [table name].............. Run query against specified table. NOTE: Query criteria is hard-coded and must be tweaked manually',
+        'scan [table name]............... Run a full table scan against specified table. NOTE: Scan criteria is hard-coded and must be tweaked manually',
+        'update [table name]............. Update single item on specified table. NOTE: Update criteria is hard-coded and must be tweaked manually'
     ].join('\n'));
     return 9;
 
