@@ -5,7 +5,8 @@ var AWS = require('aws-sdk'),
     seedData = require('./lib/seed-data'),
     awsClient,
     docClient,
-    cmd;
+    cmd,
+    tableName;
 
 //SET API CONFIG VALUES
 AWS.config.update({
@@ -33,16 +34,22 @@ function handler(err, data) {
 }
 
 cmd = process.argv[2];
+tableName = process.argv[3];
 
 if(cmd == 'listTables') {
 
     docClient.listTables({}, handler);
 
+}else if(cmd == 'descTable') {
+
+    docClient.describeTable({
+        TableName: tableName
+    }, handler);
+
 }else if(cmd == 'seedTable') {
 
     (function() {
-        var tableName = process.argv[3],
-            recordCount,
+        var recordCount,
             n;
 
         if(!seedData.exists(tableName)) {
@@ -65,48 +72,46 @@ if(cmd == 'listTables') {
 
 }else if(cmd == 'initTable') {
 
-    (function() {
-        var tableName = process.argv[3];
+    var tableName = process.argv[3];
 
-        //scan for all items in specified table. For each 
-        //item, generate the key object and delete the item
-        docClient.scan({
-            TableName: tableName
-        }, function(err, data) {
-            if(err) {
-                console.log(err, err.stack);
-            }else {
-                data.Items.forEach(function(item) {
-                    docClient.deleteItem({
-                        TableName: tableName,
-                        Key: seedData.getDeleteKeys(tableName, item)
-                    }, handler);
-                });
-            }
-        });
-    })();
+    //scan for all items in specified table. For each 
+    //item, generate the key object and delete the item
+    docClient.scan({
+        TableName: tableName
+    }, function(err, data) {
+        if(err) {
+            console.log(err, err.stack);
+        }else {
+            data.Items.forEach(function(item) {
+                docClient.deleteItem({
+                    TableName: tableName,
+                    Key: seedData.getDeleteKeys(tableName, item)
+                }, handler);
+            });
+        }
+    });
 
 }else if(cmd == 'getAllItems') {
     
-    (function() {
-        var tableName = process.argv[3];
+    //scan for all items in the specified table
+    docClient.scan({
+        TableName: tableName
+    }, handler);
 
-        //scan for all items in the specified table
-        docClient.scan({
-            TableName: tableName
-        }, handler);
-    })();
 }else {
+
     console.log('Invalid command.\n');
     console.log([
         '\nUsage: script.js [command] [command arguments]\n',
         'Valid Commands:',
         'listTables',
+        'descTable [table name]',
         'seedTable [table name]',
         'initTable [table name]',
         'getAllItems [table name]'
     ].join('\n'));
     return 9;
+
 }
 
 /*
