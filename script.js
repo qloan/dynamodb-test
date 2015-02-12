@@ -102,8 +102,6 @@ if(cmd == 'listTables') {
 
 }else if(cmd == 'query') {
 
-    //console.dir(docClient.Condition('email', 'EQ', 'joeuser@quickenloans.com'));
-
     docClient.query({
         TableName: tableName,
         //IndexName: 'my-index',
