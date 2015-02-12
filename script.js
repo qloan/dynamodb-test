@@ -119,6 +119,22 @@ if(cmd == 'listTables') {
         }
     }, handler);
 
+}else if(cmd == 'scan') {
+
+    docClient.scan({
+        TableName: tableName,
+        //IndexName: 'my-index',
+        FilterExpression: '#duration >= :duration and #creditReport.score > :score',
+        ExpressionAttributeNames: {
+            '#duration'     : 'duration',
+            '#creditReport' : 'creditReport'
+        },
+        ExpressionAttributeValues: {
+            ':duration' : 30,
+            ':score'    : 700
+        }
+    }, handler);
+
 }else if(cmd == 'getAllItems') {
     
     //scan for all items in the specified table
