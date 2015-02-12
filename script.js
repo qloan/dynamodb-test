@@ -100,6 +100,27 @@ if(cmd == 'listTables') {
         }, handler);
     })();
 
+}else if(cmd == 'query') {
+
+    //console.dir(docClient.Condition('email', 'EQ', 'joeuser@quickenloans.com'));
+
+    docClient.query({
+        TableName: tableName,
+        //IndexName: 'my-index',
+        KeyConditions: [
+            docClient.Condition('email', 'EQ', 'asdf@test.com')
+        ],
+        FilterExpression: '#duration >= :duration and #creditReport.score > :score',
+        ExpressionAttributeNames: {
+            '#duration'     : 'duration',
+            '#creditReport' : 'creditReport'
+        },
+        ExpressionAttributeValues: {
+            ':duration' : 30,
+            ':score'    : 700
+        }
+    }, handler);
+
 }else if(cmd == 'getAllItems') {
     
     //scan for all items in the specified table
@@ -123,14 +144,3 @@ if(cmd == 'listTables') {
     return 9;
 
 }
-
-/*
-
-docClient.query({
-    TableName: 'my_first_table',
-    KeyConditions: [
-        docClient.Condition('my_id', 'EQ', '2'),
-        docClient.Condition('company', 'GT', 'Z')
-    ]
-}, handler);
-*/
