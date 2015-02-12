@@ -165,7 +165,7 @@ if(cmd == 'listTables') {
 
     console.log('Invalid command.\n');
     console.log([
-        '\nUsage: script.js [command] [command arguments]\n',
+        '\nUsage: exec.js [command] [command arguments]\n',
         'Valid Commands:',
         '---------------',
         'listTables...................... List all tables in DynamoDB account',
