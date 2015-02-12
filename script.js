@@ -135,6 +135,23 @@ if(cmd == 'listTables') {
         }
     }, handler);
 
+}else if(cmd == 'update') {
+
+    docClient.updateItem({
+        TableName: tableName,
+        Key: {
+            email: 'asdf@test.com',
+            loan_id: 1001
+        },
+        UpdateExpression: 'set #rate = :rate',
+        ExpressionAttributeNames: {
+            '#rate': 'rate'
+        },
+        ExpressionAttributeValues: {
+            ':rate': 4.125
+        }
+    }, handler);
+
 }else if(cmd == 'getAllItems') {
     
     //scan for all items in the specified table
