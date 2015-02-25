@@ -36,7 +36,47 @@ function handler(err, data) {
 cmd = process.argv[2];
 tableName = process.argv[3];
 
-if(cmd == 'listTables') {
+if(cmd == 'createTables') {
+
+    docClient.createTable({
+        TableName: 'clients',
+        AttributeDefinitions: [{
+            AttributeName: 'email',
+            AttributeType: 'S'
+        }],
+        KeySchema: [{
+            AttributeName: 'email',
+            KeyType: 'HASH'
+        }],
+        ProvisionedThroughput: {
+            ReadCapacityUnits: 2,
+            WriteCapacityUnits: 2
+        }
+    }, handler);
+
+    docClient.createTable({
+        TableName: 'loans',
+        AttributeDefinitions: [{
+            AttributeName: 'email',
+            AttributeType: 'S'
+        }, {
+            AttributeName: 'loan_id',
+            AttributeType: 'N'
+        }],
+        KeySchema: [{
+            AttributeName: 'email',
+            KeyType: 'HASH'
+        }, {
+            AttributeName: 'loan_id',
+            KeyType: 'RANGE'
+        }],
+        ProvisionedThroughput: {
+            ReadCapacityUnits: 2,
+            WriteCapacityUnits: 2
+        }
+    }, handler);
+
+}else if(cmd == 'listTables') {
 
     docClient.listTables({}, handler);
 
@@ -168,6 +208,7 @@ if(cmd == 'listTables') {
         '\nUsage: exec.js [command] [command arguments]\n',
         'Valid Commands:',
         '---------------',
+        'createTables.................... Create tables for all examples',
         'listTables...................... List all tables in DynamoDB account',
         'descTable [table name].......... Describe specified table',
         'seedTable [table name].......... Seed the specified table with dummy data',
