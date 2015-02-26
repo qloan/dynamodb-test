@@ -1,5 +1,5 @@
 {
-  "name": "dynamodb tester",
+  "name": "dynamodb-tester",
   "version": "1.0.0",
   "description": "DynamoDB Tester",
   "main": "index.js",
