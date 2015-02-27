@@ -19,29 +19,29 @@ var AWS = new vogels.AWS.DynamoDB();
 
 //DEFINE CLIENT MODEL
 var Client = vogels.define('Client', {
-	hashKey: 'email',
-	schema: {
-		email    : joi.string().email(),
-		password : joi.string(),
-		address  : joi.string()
-	}
+    hashKey: 'email',
+    schema: {
+        email    : joi.string().email(),
+        password : joi.string(),
+        address  : joi.string()
+    }
 });
 
 //DEFINE LOAN MODEL
 var Loan = vogels.define('Loan', {
-	hashKey: 'email',
-	rangeKey: 'loan_id',
-	schema: {
-	    email        : joi.string().email(),
-	    loan_id      : joi.number(),
-	    amount       : joi.number(),
-	    rate         : joi.number(),
-	    duration     : joi.number(),
-	    creditReport : joi.object().keys({
-	    	score        : joi.number(),
-	    	latePayments : joi.number()
-	    })
-	}
+    hashKey: 'email',
+    rangeKey: 'loan_id',
+    schema: {
+        email        : joi.string().email(),
+        loan_id      : joi.number(),
+        amount       : joi.number(),
+        rate         : joi.number(),
+        duration     : joi.number(),
+        creditReport : joi.object().keys({
+            score        : joi.number(),
+            latePayments : joi.number()
+        })
+    }
 });
 
 //GENERIC CALLBACK HANDLER
@@ -111,8 +111,8 @@ if(cmd == 'createTables') {
     (function() {
         var recordCount,
             params = {
-            	ConditionExpression: seedData.getInsertConditionExpression(tableName)
-	        },
+                ConditionExpression: seedData.getInsertConditionExpression(tableName)
+            },
             rec,
             n;
 
@@ -124,35 +124,91 @@ if(cmd == 'createTables') {
         recordCount = seedData.tableLen(tableName);
 
         for(n=0; n<recordCount; n++) {
-        	
-        	rec = seedData.get(tableName, n);
-
-        	if(tableName == 'clients') {
-        		Client.create({
-        			email    : rec.email,
-        			password : rec.password,
-        			address  : rec.address
-        		}, params, handler);
-        	}else if(tableName == 'loans') {
-        		Loan.create({
-				    email        : rec.email,
-				    loan_id      : rec.loan_id,
-				    amount       : rec.amount,
-				    rate         : rec.rate,
-				    duration     : rec.duration,
-				    creditReport : {
-				    	score        : rec.creditReport.score,
-				    	latePayments : rec.creditReport.latePayments
-				    }
-        		}, params, handler);
-        	}
             
-            //docClient.putItem({
-            //    TableName: tableName,
-            //    Item: seedData.get(tableName, n),
-            //    ConditionExpression: seedData.getInsertConditionExpression(tableName)  //ensure doesn't already exist. without this, item would be overwritten.
-            //}, handler);
+            rec = seedData.get(tableName, n);
+
+            if(tableName == 'clients') {
+                Client.create({
+                    email    : rec.email,
+                    password : rec.password,
+                    address  : rec.address
+                }, params, handler);
+            }else if(tableName == 'loans') {
+                Loan.create({
+                    email        : rec.email,
+                    loan_id      : rec.loan_id,
+                    amount       : rec.amount,
+                    rate         : rec.rate,
+                    duration     : rec.duration,
+                    creditReport : {
+                        score        : rec.creditReport.score,
+                        latePayments : rec.creditReport.latePayments
+                    }
+                }, params, handler);
+            }
         }
+    })();
+
+}else if(cmd == 'clearTable') {
+
+    (function() {
+        var model;
+        if(tableName == 'clients') {
+            model = Client;
+        }else if(tableName == 'loans') {
+            model = Loan;
+        }
+    
+        //scan for all items in specified table. For each 
+        //item, generate the key object and delete the item
+        model.scan().loadAll().exec(function(err, data) {
+            data.Items.forEach(function(item) {
+                model.destroy(seedData.getDeleteKeys(tableName, item.attrs), handler);
+            });
+        });
+    })();
+
+}else if(cmd == 'getItem') {
+
+    (function() {
+        var model;
+        var key = eval('(' + process.argv[4] + ')');
+        var params = {
+            ConsistentRead: true
+        };
+
+        if(tableName == 'clients') {
+            model = Client;
+        }else if(tableName == 'loans') {
+            model = Loan;
+        }
+
+        model.get(key, params, handler);
+    })();
+
+}else if(cmd == 'query') {
+
+    (function() {
+        var model;
+
+        if(tableName == 'clients') {
+            model = Client;
+        }else if(tableName == 'loans') {
+            model = Loan;
+        }
+
+        model
+            .query('asdf@test.com')
+            .filterExpression('#duration >= :duration and #creditReport.score > :score')
+            .expressionAttributeNames({
+                '#duration'     : 'duration',
+                '#creditReport' : 'creditReport'
+            })
+            .expressionAttributeValues({
+                ':duration' : 30,
+                ':score'    : 700
+            })
+            .exec(handler);
     })();
 
 }else {
