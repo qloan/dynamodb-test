@@ -18,6 +18,8 @@
   "homepage": "https://github.com/qloan/dynamodb-test",
   "dependencies": {
     "aws-sdk": "^2.1.8",
-    "dynamodb-doc": "git://github.com/awslabs/dynamodb-document-js-sdk.git"
+    "dynamodb-doc": "git://github.com/awslabs/dynamodb-document-js-sdk.git",
+    "joi": "^5.1.0",
+    "vogels": "^2.0.0-rc8"
   }
 }
