@@ -211,6 +211,73 @@ if(cmd == 'createTables') {
             .exec(handler);
     })();
 
+}else if(cmd == 'scan') {
+
+    (function() {
+        var model;
+
+        if(tableName == 'clients') {
+            model = Client;
+        }else if(tableName == 'loans') {
+            model = Loan;
+        }
+
+        model
+            .scan()
+            //.where('duration').gte(30) //filter expression can also be written cleaner this way. See docs.
+            .filterExpression('#duration >= :duration and #creditReport.score > :score')
+            .expressionAttributeNames({
+                '#duration'     : 'duration',
+                '#creditReport' : 'creditReport'
+            })
+            .expressionAttributeValues({
+                ':duration' : 30,
+                ':score'    : 700
+            })
+            .exec(handler);
+    })();
+
+}else if(cmd == 'update') {
+
+    (function() {
+        var model;
+
+        var params = {
+            UpdateExpression: 'set #rate = :rate',
+            ExpressionAttributeNames: {
+                '#rate': 'rate'
+            },
+            ExpressionAttributeValues: {
+                ':rate': 4.125
+            }
+        };
+
+        if(tableName == 'clients') {
+            model = Client;
+        }else if(tableName == 'loans') {
+            model = Loan;
+        }
+
+        model.update({
+            email: 'asdf@test.com',
+            loan_id: 1001
+        }, params, handler);
+    })();
+
+}else if(cmd == 'getAllItems') {
+
+    (function() {
+        var model;
+
+        if(tableName == 'clients') {
+            model = Client;
+        }else if(tableName == 'loans') {
+            model = Loan;
+        }
+
+        model.scan().loadAll().exec(handler);
+    })();
+
 }else {
 
     console.log('Invalid command.\n');
