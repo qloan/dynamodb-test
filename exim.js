@@ -78,7 +78,7 @@ if(cmd == 'export') {
 				},
 				function(data, cb) {
 					//WRITE TABLE DATA TO FILE
-					fs.writeFile(dir + '/' + table, JSON.stringify(data), cb);
+					fs.writeFile([dir, '/', table, '.json'].join(''), JSON.stringify(data), cb);
 				}], eachCb);
 
 		}, mainCb);
