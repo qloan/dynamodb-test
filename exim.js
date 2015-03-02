@@ -25,64 +25,63 @@ var sTime = new Date().getTime();
 
 if(cmd == 'export') {
 	
-	async.waterfall([function(cb) {
-		//CREATE BACKUP DIR IF IT DOESN'T EXIST
-		fs.stat(dir, function(err) {
-			if(err) {
-				fs.mkdir(dir, cb);
-			}else {
-				cb();
-			}
-		});
-	}, function(cb) {
-		//GET LIST OF ALL TABLES
-		docClient.listTables({}, cb);
-	}, function(data, mainCb) {
-		//ITERATE OVER EACH TABLE
-		async.eachSeries(data.TableNames, function(table, eachCb) {
+	async.waterfall([
+		function(cb) {
+			//CREATE BACKUP DIR IF IT DOESN'T EXIST
+			fs.stat(dir, function(err) {
+				if(err) {
+					fs.mkdir(dir, cb);
+				}else {
+					cb();
+				}
+			});
+		}, function(cb) {
+			//GET LIST OF ALL TABLES
+			docClient.listTables({}, cb);
+		}, function(data, mainCb) {
+			//ITERATE OVER EACH TABLE
+			async.eachSeries(data.TableNames, function(table, eachCb) {
 
-			var tableObj = {
-				tableName: table,
-				data: []
-			};
+				var tableData = [];
 
-			console.log('Backing up ' + table + '...');
+				console.log('Backing up ' + table + '...');
 
-			async.waterfall([
-				function(wfCb) {
-					//GET ALL ITEMS IN TABLE. BUILD AN OBJECT WITH RESULTS.
-					function getItems(lastEvaluatedKey, cb) {
-						var params = {
-					        TableName: table,
-					        Limit: scanLimit
-					    };
-					    if(lastEvaluatedKey) {
-					    	params.ExclusiveStartKey = lastEvaluatedKey;
-					    }
-						docClient.scan(params, function(err, data) {
-					        if(err) {
-					            cb(err);
-					        }else {
-					        	tableObj.data = tableObj.data.concat(data.Items);
-					        	if(data.LastEvaluatedKey) {
-					        		getItems(data.LastEvaluatedKey, cb);
-					        	}else {
-					        		cb(null, tableObj);
-					        	}
-					        }
-					    });	
-					}
-				    
-				    getItems(null, wfCb);
+				async.waterfall([
+					function(wfCb) {
+						//GET ALL ITEMS IN TABLE. BUILD AN OBJECT WITH RESULTS.
+						function getItems(lastEvaluatedKey, cb) {
+							var params = {
+						        TableName: table,
+						        Limit: scanLimit
+						    };
+						    if(lastEvaluatedKey) {
+						    	params.ExclusiveStartKey = lastEvaluatedKey;
+						    }
+							docClient.scan(params, function(err, data) {
+						        if(err) {
+						            cb(err);
+						        }else {
+						        	tableData = tableData.concat(data.Items);
+						        	if(data.LastEvaluatedKey) {
+						        		getItems(data.LastEvaluatedKey, cb);
+						        	}else {
+						        		cb(null, tableData);
+						        	}
+						        }
+						    });	
+						}
+					    
+					    getItems(null, wfCb);
 
-				},
-				function(data, cb) {
-					//WRITE TABLE DATA TO FILE
-					fs.writeFile([dir, '/', table, '.json'].join(''), JSON.stringify(data), cb);
-				}], eachCb);
+					},
+					function(data, cb) {
+						//WRITE TABLE DATA TO FILE
+						fs.writeFile([dir, '/', table, '.json'].join(''), JSON.stringify(data), cb);
+					}], eachCb);
 
-		}, mainCb);
-	}], function(err) {
+			}, mainCb);
+		}
+	], function(err) {
 		if(err) {
 			console.log('ERROR: ' + err);
 			return;
@@ -91,6 +90,35 @@ if(cmd == 'export') {
 	});
 }else if(cmd == 'import') {
 	
+	async.waterfall([
+		function(cb) {
+			fs.readdir(dir, cb);
+		},
+		function(files, wfCb) {
+			async.eachSeries(files, function(file, eachCb) {
+				var table = file.replace(/\.json$/, '');
+				
+				console.log('Importing ' + table + '...');
+
+				async.waterfall([
+					function(cb) {
+						fs.readFile([dir, '/', file].join(''), {encoding: 'utf8'}, cb);
+					},
+					function(data, cb) {
+						data = JSON.parse(data);
+						console.dir(data);
+					}
+				], eachCb);
+			}, wfCb);
+		}
+	], function(err) {
+		if(err) {
+			console.log('ERROR: ' + err);
+			return;
+		}
+		console.log('Successfully imported in ' + (new Date().getTime() - sTime) + 'ms');
+	});
+
 }else {
     console.log('Invalid command.\n');
     console.log([
