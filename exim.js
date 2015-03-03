@@ -6,7 +6,8 @@ var DOC = require('dynamodb-doc');
 var fs = require('fs');
 var cmd = process.argv[2];
 var dir = (process.argv[3]) ? process.argv[3] : 'dynamodb_backup';
-var scanLimit = 5;
+var scanLimit = 5; //Number of records to get per scan request
+var putLimit = 5;  //Number of records to put concurrently
 
 //CREATE VOGELS INSTANCE
 AWS.config.update({
@@ -92,9 +93,11 @@ if(cmd == 'export') {
 	
 	async.waterfall([
 		function(cb) {
+			//READ BACKUP DIR
 			fs.readdir(dir, cb);
 		},
 		function(files, wfCb) {
+			//ITERATE OVER EACH BACKUP FILE. EACH FILE REPRESENTS A TABLE.
 			async.eachSeries(files, function(file, eachCb) {
 				var table = file.replace(/\.json$/, '');
 				
@@ -102,11 +105,18 @@ if(cmd == 'export') {
 
 				async.waterfall([
 					function(cb) {
+						//READ BACKUP FILE
 						fs.readFile([dir, '/', file].join(''), {encoding: 'utf8'}, cb);
 					},
 					function(data, cb) {
+						//PARSE BACKUP DATA, ITERATE OVER EACH ITEM AND DO A PUT REQUEST.
 						data = JSON.parse(data);
-						console.dir(data);
+						async.eachLimit(data, putLimit, function(rec, eachCb) {
+				            docClient.putItem({
+				                TableName: table,
+				                Item: rec
+				            }, eachCb);
+						}, cb);
 					}
 				], eachCb);
 			}, wfCb);
