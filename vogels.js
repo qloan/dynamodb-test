@@ -19,23 +19,40 @@ var AWS = new vogels.AWS.DynamoDB();
 
 //DEFINE CLIENT MODEL
 var Client = vogels.define('Client', {
-    hashKey: 'email',
+    hashKey: 'client_id',
     schema: {
-        email    : joi.string().email(),
-        password : joi.string(),
-        address  : joi.string()
+    	client_id : vogels.types.uuid(),
+        email     : joi.string().email(),
+        password  : joi.string(),
+        personalInformation     : joi.object().optional().keys({
+        	firstName			: joi.string(),
+        	lastName            : joi.string(),
+        	streetAddress       : joi.string(),
+        	city                : joi.string(),
+        	state               : joi.string(),
+        	zip                 : joi.number(),
+        	birthdate           : joi.number(), // unix epoch time
+        	income              : joi.number()
+        }),
+        campaign_referral: joi.string()
     }
 });
 
 //DEFINE LOAN MODEL
 var Loan = vogels.define('Loan', {
-    hashKey: 'email',
-    rangeKey: 'loan_id',
+    hashKey: 'loan_id',
+    rangeKey: 'timestamp',
     schema: {
-        email        : joi.string().email(),
-        loan_id      : joi.number(),
+        client_id    : vogels.types.uuid(),
+        loan_id      : vogels.types.uuid(),
+        timestamp	 : joi.number(), // unix epoch time
         amount       : joi.number(),
         rate         : joi.number(),
+        status		 : joi.string().required(),
+        bankAccount  : joi.object().optional().keys({
+        	routing  	 : joi.number().min(100000000).max(999999999),
+        	account  	 : joi.number().min(1000).max(99999999999999)
+        }),
         duration     : joi.number(),
         creditReport : joi.object().keys({
             score        : joi.number(),
@@ -61,11 +78,11 @@ if(cmd == 'createTables') {
     AWS.createTable({
         TableName: 'clients',
         AttributeDefinitions: [{
-            AttributeName: 'email',
+            AttributeName: 'client_id',
             AttributeType: 'S'
         }],
         KeySchema: [{
-            AttributeName: 'email',
+            AttributeName: 'client_id',
             KeyType: 'HASH'
         }],
         ProvisionedThroughput: {
@@ -77,17 +94,17 @@ if(cmd == 'createTables') {
     AWS.createTable({
         TableName: 'loans',
         AttributeDefinitions: [{
-            AttributeName: 'email',
+            AttributeName: 'loan_id',
             AttributeType: 'S'
         }, {
-            AttributeName: 'loan_id',
+            AttributeName: 'timestamp',
             AttributeType: 'N'
         }],
         KeySchema: [{
-            AttributeName: 'email',
+            AttributeName: 'loan_id',
             KeyType: 'HASH'
         }, {
-            AttributeName: 'loan_id',
+            AttributeName: 'timestamp',
             KeyType: 'RANGE'
         }],
         ProvisionedThroughput: {
@@ -129,17 +146,34 @@ if(cmd == 'createTables') {
 
             if(tableName == 'clients') {
                 Client.create({
+                	client_id: rec.client_id,
                     email    : rec.email,
                     password : rec.password,
-                    address  : rec.address
+                    personalInformation: {
+			        	firstName			: rec.personalInformation.firstName,
+			        	lastName            : rec.personalInformation.lastName,
+			        	streetAddress       : rec.personalInformation.streetAddress,
+			        	city                : rec.personalInformation.city,
+			        	state               : rec.personalInformation.state,
+			        	zip                 : rec.personalInformation.zip,
+			        	birthdate           : rec.personalInformation.birthdate,
+			        	income              : rec.personalInformation.income
+                    },
+			        campaign_referral: rec.campaign_referral
                 }, params, handler);
             }else if(tableName == 'loans') {
                 Loan.create({
-                    email        : rec.email,
+                    client_id    : rec.client_id,
                     loan_id      : rec.loan_id,
+                    timestamp	 : (new Date()).getTime(),
                     amount       : rec.amount,
                     rate         : rec.rate,
+                    status		 : rec.status,
                     duration     : rec.duration,
+			        bankAccount  : {
+			        	routing  	 : rec.bankAccount.routing,
+			        	account  	 : rec.bankAccount.account
+			        },
                     creditReport : {
                         score        : rec.creditReport.score,
                         latePayments : rec.creditReport.latePayments
@@ -148,6 +182,24 @@ if(cmd == 'createTables') {
             }
         }
     })();
+
+}else if(cmd == 'seedTables') {
+
+    var params = {},
+    	recordCount = seedData.tableLen('clients');
+
+    console.log('Creating ' + recordCount + ' client documents...');
+
+    seedData.clients.forEach(function (rec) {
+        Client.create(rec, params, handler);
+    });
+
+    recordCount = seedData.tableLen('loans');
+    console.log('Creating ' + recordCount + ' loan documents...');
+        
+    seedData.loans.forEach(function (rec) {
+        Loan.create(rec, params, handler);
+    });
 
 }else if(cmd == 'clearTable') {
 

@@ -21,6 +21,7 @@
     "aws-sdk": "^2.1.8",
     "dynamodb-doc": "git://github.com/awslabs/dynamodb-document-js-sdk.git",
     "joi": "^5.1.0",
+    "node-uuid": "^1.4.3",
     "vogels": "^2.0.0-rc8"
   }
 }
